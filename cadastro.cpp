@@ -23,12 +23,14 @@ struct Aluno {
 
 // Cria e retorna um novo nó com os dados do aluno
 Aluno* criarAluno(int matricula, string nome, string curso) {
-    Aluno* novo = new Aluno();  // aloca memória para o novo nó
+    Aluno* novo = new Aluno();
+
     novo->matricula = matricula;
     novo->nome = nome;
     novo->curso = curso;
-    novo->esquerda = nullptr;   // ainda não tem filhos
+    novo->esquerda = nullptr;
     novo->direita = nullptr;
+
     return novo;
 }
 
@@ -36,23 +38,22 @@ Aluno* criarAluno(int matricula, string nome, string curso) {
 // Usa recursão
 Aluno* inserir(Aluno* raiz, int matricula, string nome, string curso, bool& inserido) {
 
-    // Caso a raiz seja nula, cria um novo nó e informa que inseriu
+    // Caso a raiz seja nula, cria um novo nó
     if (raiz == nullptr) {
         inserido = true;
         return criarAluno(matricula, nome, curso);
     }
 
-    // Compara o nome novo com o nome do nó atual
+    // Nome menor: insere à esquerda
     if (nome < raiz->nome) {
-        // Nome menor: vai para a esquerda
         raiz->esquerda = inserir(raiz->esquerda, matricula, nome, curso, inserido);
     }
+    // Nome maior: insere à direita
     else if (nome > raiz->nome) {
-        // Nome maior: vai para a direita
         raiz->direita = inserir(raiz->direita, matricula, nome, curso, inserido);
     }
     else {
-        // Nome igual: aluno já existe, então não insere
+        // Nome igual: não permite cadastrar novamente
         inserido = false;
         cout << "Aluno \"" << nome << "\" ja cadastrado!" << endl;
     }
@@ -60,26 +61,39 @@ Aluno* inserir(Aluno* raiz, int matricula, string nome, string curso, bool& inse
     return raiz;
 }
 
+// Verifica se já existe algum aluno com a matrícula informada
+bool matriculaExiste(Aluno* raiz, int matricula) {
+    if (raiz == nullptr) {
+        return false;
+    }
+
+    // Encontrou a matrícula repetida
+    if (raiz->matricula == matricula) {
+        return true;
+    }
+
+    // Como a árvore é organizada pelo nome, verifica os dois lados
+    return matriculaExiste(raiz->esquerda, matricula) ||
+           matriculaExiste(raiz->direita, matricula);
+}
+
 // Percorre a árvore em ordem e exibe os alunos cadastrados
 void listarEmOrdem(Aluno* raiz) {
     if (raiz == nullptr) {
-        return; // chegou numa folha, para a recursão
+        return;
     }
 
-    listarEmOrdem(raiz->esquerda);  // visita esquerda
+    listarEmOrdem(raiz->esquerda);
 
-    // Exibe os dados do aluno atual
     cout << raiz->nome
          << " - Matricula: " << raiz->matricula
          << " - Curso: " << raiz->curso << endl;
 
-    listarEmOrdem(raiz->direita);   // visita direita
+    listarEmOrdem(raiz->direita);
 }
 
 // Busca um aluno pelo nome e retorna o ponteiro para ele
-// Retorna nullptr se não encontrar
 Aluno* buscar(Aluno* raiz, string nome) {
-    // Caso base: árvore vazia ou nome encontrado
     if (raiz == nullptr) {
         return nullptr;
     }
@@ -88,23 +102,19 @@ Aluno* buscar(Aluno* raiz, string nome) {
         return raiz;
     }
 
-    // Nome buscado é menor
     if (nome < raiz->nome) {
         return buscar(raiz->esquerda, nome);
     }
 
-    // Nome buscado é maior
     return buscar(raiz->direita, nome);
 }
 
 // Calcula a altura da árvore recursivamente
-// Altura = número de níveis da árvore
 int altura(Aluno* raiz) {
     if (raiz == nullptr) {
-        return 0; // árvore vazia tem altura 0
+        return 0;
     }
 
-    // Calcula altura dos dois lados e retorna o maior + 1
     int alturaEsq = altura(raiz->esquerda);
     int alturaDir = altura(raiz->direita);
 
@@ -118,19 +128,17 @@ int altura(Aluno* raiz) {
 // Conta o total de alunos cadastrados na árvore
 int contarAlunos(Aluno* raiz) {
     if (raiz == nullptr) {
-        return 0; // árvore vazia
+        return 0;
     }
 
-    // Conta o nó atual + todos da esquerda + todos da direita
     return 1 + contarAlunos(raiz->esquerda) + contarAlunos(raiz->direita);
 }
 
 int main() {
-    Aluno* raiz = nullptr; // árvore começa vazia
+    Aluno* raiz = nullptr;
     int opcao;
 
     do {
-        // Menu de opções
         cout << "\n===== SISTEMA DE CADASTRO DE ALUNOS =====" << endl;
         cout << "1. Inserir aluno" << endl;
         cout << "2. Buscar aluno" << endl;
@@ -143,7 +151,6 @@ int main() {
         cin.ignore();
 
         if (opcao == 1) {
-            // Inserir aluno
             int matricula;
             string nome, curso;
 
@@ -157,19 +164,24 @@ int main() {
             cout << "Curso: ";
             getline(cin, curso);
 
-            // Variável que informa se o aluno foi inserido ou se já existia
-            bool inserido = false;
+            // Verifica se a matrícula já está cadastrada
+            if (matriculaExiste(raiz, matricula)) {
+                cout << "Matricula " << matricula << " ja cadastrada!" << endl;
+            }
+            else {
+                // Variável usada para informar se o nome foi inserido
+                bool inserido = false;
 
-            raiz = inserir(raiz, matricula, nome, curso, inserido);
+                raiz = inserir(raiz, matricula, nome, curso, inserido);
 
-            // Só mostra mensagem de sucesso quando o aluno for novo
-            if (inserido) {
-                cout << "Aluno inserido com sucesso!" << endl;
+                // Só mostra sucesso se o nome não for repetido
+                if (inserido) {
+                    cout << "Aluno inserido com sucesso!" << endl;
+                }
             }
 
         }
         else if (opcao == 2) {
-            // Buscar aluno
             string nome;
 
             cout << "Digite o nome do aluno: ";
@@ -189,7 +201,6 @@ int main() {
 
         }
         else if (opcao == 3) {
-            // Listar em ordem alfabética
             if (raiz == nullptr) {
                 cout << "Nenhum aluno cadastrado!" << endl;
             }
@@ -200,7 +211,6 @@ int main() {
 
         }
         else if (opcao == 4) {
-            // Informações da árvore
             cout << "\n--- Informacoes da arvore ---" << endl;
             cout << "Total de alunos: " << contarAlunos(raiz) << endl;
             cout << "Altura da arvore: " << altura(raiz) << endl;
@@ -210,8 +220,9 @@ int main() {
             cout << "Opcao invalida!" << endl;
         }
 
-    } while (opcao != 0); // repete até o usuário digitar 0
+    } while (opcao != 0);
 
     cout << "Encerrando o sistema. Ate logo!" << endl;
+
     return 0;
 }
