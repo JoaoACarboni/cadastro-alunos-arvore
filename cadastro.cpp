@@ -6,16 +6,17 @@
 /*
  Compilar: g++ cadastro.cpp -o cadastro
  Rodar:    .\cadastro.exe
- */
+*/
+
 #include <iostream>
 #include <string>
 using namespace std;
 
 // Estrutura aluno: nó da árvore binária
 struct Aluno {
-    int matricula;     
-    string nome;        
-    string curso; 
+    int matricula;
+    string nome;
+    string curso;
     Aluno* esquerda;     // ponteiro para filho com nome menor
     Aluno* direita;      // ponteiro para filho com nome maior
 };
@@ -33,28 +34,30 @@ Aluno* criarAluno(int matricula, string nome, string curso) {
 
 // Insere um novo aluno na árvore e retorna a raiz atualizada
 // Usa recursão
-Aluno* inserir(Aluno* raiz, int matricula, string nome, string curso) {
-    
-    // Caso a raiz seja nula, cria um novo nó e retorna
+Aluno* inserir(Aluno* raiz, int matricula, string nome, string curso, bool& inserido) {
+
+    // Caso a raiz seja nula, cria um novo nó e informa que inseriu
     if (raiz == nullptr) {
+        inserido = true;
         return criarAluno(matricula, nome, curso);
     }
 
     // Compara o nome novo com o nome do nó atual
     if (nome < raiz->nome) {
         // Nome menor: vai para a esquerda
-        raiz->esquerda = inserir(raiz->esquerda, matricula, nome, curso);
-    } 
+        raiz->esquerda = inserir(raiz->esquerda, matricula, nome, curso, inserido);
+    }
     else if (nome > raiz->nome) {
         // Nome maior: vai para a direita
-        raiz->direita = inserir(raiz->direita, matricula, nome, curso);
-    } 
+        raiz->direita = inserir(raiz->direita, matricula, nome, curso, inserido);
+    }
     else {
-        // Nome igual: aluno já existe, não insere duplicado
+        // Nome igual: aluno já existe, então não insere
+        inserido = false;
         cout << "Aluno \"" << nome << "\" ja cadastrado!" << endl;
     }
 
-    return raiz; // retorna a raiz sem modificação
+    return raiz;
 }
 
 // Percorre a árvore em ordem e exibe os alunos cadastrados
@@ -66,8 +69,8 @@ void listarEmOrdem(Aluno* raiz) {
     listarEmOrdem(raiz->esquerda);  // visita esquerda
 
     // Exibe os dados do aluno atual
-    cout << raiz->nome 
-         << " - Matricula: " << raiz->matricula 
+    cout << raiz->nome
+         << " - Matricula: " << raiz->matricula
          << " - Curso: " << raiz->curso << endl;
 
     listarEmOrdem(raiz->direita);   // visita direita
@@ -78,17 +81,19 @@ void listarEmOrdem(Aluno* raiz) {
 Aluno* buscar(Aluno* raiz, string nome) {
     // Caso base: árvore vazia ou nome encontrado
     if (raiz == nullptr) {
-        return nullptr; 
+        return nullptr;
     }
+
     if (raiz->nome == nome) {
         return raiz;
     }
 
-    // Nome buscado é menor:
+    // Nome buscado é menor
     if (nome < raiz->nome) {
         return buscar(raiz->esquerda, nome);
     }
-    // Nome buscado é maior:
+
+    // Nome buscado é maior
     return buscar(raiz->direita, nome);
 }
 
@@ -98,6 +103,7 @@ int altura(Aluno* raiz) {
     if (raiz == nullptr) {
         return 0; // árvore vazia tem altura 0
     }
+
     // Calcula altura dos dois lados e retorna o maior + 1
     int alturaEsq = altura(raiz->esquerda);
     int alturaDir = altura(raiz->direita);
@@ -105,6 +111,7 @@ int altura(Aluno* raiz) {
     if (alturaEsq > alturaDir) {
         return alturaEsq + 1;
     }
+
     return alturaDir + 1;
 }
 
@@ -113,6 +120,7 @@ int contarAlunos(Aluno* raiz) {
     if (raiz == nullptr) {
         return 0; // árvore vazia
     }
+
     // Conta o nó atual + todos da esquerda + todos da direita
     return 1 + contarAlunos(raiz->esquerda) + contarAlunos(raiz->direita);
 }
@@ -130,8 +138,9 @@ int main() {
         cout << "4. Informacoes da arvore" << endl;
         cout << "0. Sair" << endl;
         cout << "Escolha uma opcao: ";
+
         cin >> opcao;
-        cin.ignore(); // limpa o buffer do teclado
+        cin.ignore();
 
         if (opcao == 1) {
             // Inserir aluno
@@ -143,46 +152,61 @@ int main() {
             cin.ignore();
 
             cout << "Nome completo: ";
-            getline(cin, nome); // getline lê nome com espaços
+            getline(cin, nome);
 
             cout << "Curso: ";
             getline(cin, curso);
 
-            raiz = inserir(raiz, matricula, nome, curso);
-            cout << "Aluno inserido com sucesso!" << endl;
+            // Variável que informa se o aluno foi inserido ou se já existia
+            bool inserido = false;
 
-        } else if (opcao == 2) {
+            raiz = inserir(raiz, matricula, nome, curso, inserido);
+
+            // Só mostra mensagem de sucesso quando o aluno for novo
+            if (inserido) {
+                cout << "Aluno inserido com sucesso!" << endl;
+            }
+
+        }
+        else if (opcao == 2) {
             // Buscar aluno
             string nome;
+
             cout << "Digite o nome do aluno: ";
             getline(cin, nome);
 
             Aluno* encontrado = buscar(raiz, nome);
+
             if (encontrado != nullptr) {
                 cout << "Aluno encontrado!" << endl;
-                cout << "Nome: "      << encontrado->nome      << endl;
+                cout << "Nome: " << encontrado->nome << endl;
                 cout << "Matricula: " << encontrado->matricula << endl;
-                cout << "Curso: "     << encontrado->curso     << endl;
-            } else {
+                cout << "Curso: " << encontrado->curso << endl;
+            }
+            else {
                 cout << "Aluno nao encontrado!" << endl;
             }
 
-        } else if (opcao == 3) {
+        }
+        else if (opcao == 3) {
             // Listar em ordem alfabética
             if (raiz == nullptr) {
                 cout << "Nenhum aluno cadastrado!" << endl;
-            } else {
+            }
+            else {
                 cout << "\n--- Alunos em ordem alfabetica ---" << endl;
                 listarEmOrdem(raiz);
             }
 
-        } else if (opcao == 4) {
+        }
+        else if (opcao == 4) {
             // Informações da árvore
             cout << "\n--- Informacoes da arvore ---" << endl;
             cout << "Total de alunos: " << contarAlunos(raiz) << endl;
-            cout << "Altura da arvore: " << altura(raiz)      << endl;
+            cout << "Altura da arvore: " << altura(raiz) << endl;
 
-        } else if (opcao != 0) {
+        }
+        else if (opcao != 0) {
             cout << "Opcao invalida!" << endl;
         }
 
